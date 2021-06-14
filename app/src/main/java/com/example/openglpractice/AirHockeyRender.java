@@ -15,10 +15,6 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import static android.opengl.GLES20.*;
-// 对于每一个单独定义过的顶点，顶点着色器都会被调用一次；
-// 当它被调用的时候，它会在a_Position属性里接收当前定点的位置, 这个属性被定义成vec4类型
-// vec4包含4个分量：x,y,z,w，默认x,y,z=0，w=1
-// attribute就是把java文件中属性放进着色器的手段
 
 public class AirHockeyRender implements GLSurfaceView.Renderer {
 
@@ -102,7 +98,6 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
         // 获取u_Color的位置
         uColorLocation = glGetUniformLocation(program, U_COLOR);
-
         // 获取a_Position的属性位置
         aPositionLocation = glGetAttribLocation(program, A_POSITION);
 
@@ -112,6 +107,15 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
 
     /**
+     * public static void glVertexAttribPointer(
+     *         int index, 属性位置，即通知OpenGL读取数据到哪里
+     *         int size, 每个属性的数据的计数，即有多少分量与每个顶点关联；
+     *                   这里为每个顶点传了两个分量，着色器中的vec4 a_Position剩下两个分量用默认值
+     *         int type, 数据类型
+     *         boolean normalized, 使用整型时才有用
+     *         int stride, 只有档一个数组存储多于一个属性时，它才有意义
+     *         java.nio.Buffer ptr 告诉OpenGL去哪里读取数据
+     *     )
      * 通知OpenGL在vertexData读取positionLocation的数据
      *
      * @param positionLocation
@@ -119,17 +123,6 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
      */
     void attachVertexData(int positionLocation, FloatBuffer vertexData) {
         vertexData.position(0);
-        /**
-         * public static void glVertexAttribPointer(
-         *         int index, 属性位置，即通知OpenGL读取数据到哪里
-         *         int size, 每个属性的数据的计数，即有多少分量与每个顶点关联；
-         *                   这里为每个顶点传了两个分量，着色器中的vec4 a_Position剩下两个分量用默认值
-         *         int type, 数据类型
-         *         boolean normalized, 使用整型时才有用
-         *         int stride, 只有档一个数组存储多于一个属性时，它才有意义
-         *         java.nio.Buffer ptr 告诉OpenGL去哪里读取数据
-         *     )
-         */
         glVertexAttribPointer(positionLocation, POSITION_COMPONENT_COUNT, GL_FLOAT,
                 false, 0, vertexData);
         // 使能顶点数组
@@ -154,18 +147,15 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     /**
      * 画三角形
+     * public static native void glDrawArrays(
+     *          int mode, 绘制类型
+     *          int first, 告诉OpenGL从顶点数组的某个位置开始读顶点
+     *          int count, 读入多少数据
+     * );
      */
     void drawTriangles() {
         // 更新着色器中u_Color的值
         glUniform4f(uColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-
-        /**
-         * public static native void glDrawArrays(
-         *         int mode, 绘制类型
-         *         int first, 告诉OpenGL从顶点数组的某个位置开始读顶点
-         *         int count, 读入多少数据
-         *     );
-         */
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
