@@ -35,7 +35,7 @@ public class AirHockeyActivity extends AppCompatActivity {
             // request an OpenGL ES 2.0 compatible context.
             glSurfaceView.setEGLContextClientVersion(2);
             // Assign renderer. 设置renderer
-            glSurfaceView.setRenderer(new AirHockeyRender());
+            glSurfaceView.setRenderer(new AirHockeyRender(this));
             rendererSet = true;
         } else {
             Toast.makeText(this, "This device does not support OpenGL ES 2.0",
