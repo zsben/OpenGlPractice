@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 
+import com.example.openglpractice.util.MatrixUtils;
 import com.example.openglpractice.util.ShaderUtils;
 import com.example.openglpractice.util.TextResourceUtil;
 
@@ -15,7 +16,11 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import static android.opengl.GLES20.*;
+import static android.opengl.Matrix.multiplyMM;
 import static android.opengl.Matrix.orthoM;
+import static android.opengl.Matrix.rotateM;
+import static android.opengl.Matrix.setIdentityM;
+import static android.opengl.Matrix.translateM;
 
 public class AirHockeyRender implements GLSurfaceView.Renderer {
 
@@ -26,23 +31,23 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     // 每个float的字节数
     private static final int BYTES_PER_FLOAT = 4;
 
-    // 顶点属性数组， 使用三角形卷曲顺序（逆时针）,每个顶点五位，前两位坐标xy，后三位rgb
+    // 顶点属性数组， 使用三角形卷曲顺序（逆时针）xyzwrgb
     float[] tableVerticesWithTriangles = {
             // Triangle Fan
-            0f, 0f, 1f, 1f, 1f,
-            -0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
-            0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
-            0.5f, 0.5f, 0.7f, 0.7f, 0.7f,
-            -0.5f, 0.5f, 0.7f, 0.7f, 0.7f,
-            -0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
+            0f, 0f,     /*0f,     1f,*/     1f, 1f, 1f,
+            -0.5f, -0.5f,  /*0f,     1f,*/     0.7f, 0.7f, 0.7f,
+            0.5f, -0.5f,  /*0f,     1f,*/     0.7f, 0.7f, 0.7f,
+            0.5f, 0.5f,   /*0f,     1f,*/     0.7f, 0.7f, 0.7f,
+            -0.5f, 0.5f,   /*0f,     1f,*/     0.7f, 0.7f, 0.7f,
+            -0.5f, -0.5f,  /*0f,     1f,*/     0.7f, 0.7f, 0.7f,
 
             // Line 1
-            -0.5f, 0f, 1f, 0f, 0f,
-            0.5f, 0f, 1f, 0f, 0f,
+            -0.5f, 0f,     /*0f,     1f,*/     1f, 0f, 0f,
+            0.5f, 0f,     /*0f,     1f,*/     1f, 0f, 0f,
 
             // Mallets
-            0f, -0.25f, 0f, 0f, 0f,
-            0f, 0.25f, 1f, 0f, 0f
+            0f, -0.25f, /*0f,     1f,*/     0f, 0f, 0f,
+            0f, 0.25f,  /*0f,     1f,*/     1f, 0f, 0f
     };
 
     // 为片段着色器中的uniform创建一个常量
@@ -77,6 +82,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     private int uMatrixLocation;
     // 矩阵值 4*4
     private final float[] projectionMatrix = new float[16];
+
+    private final float[] modelMatrix = new float[16];
+
 
     public AirHockeyRender(Context context) {
         vertexData = ByteBuffer
@@ -127,13 +135,13 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     /**
      * public static void glVertexAttribPointer(
-     *  int index, 属性位置，即通知OpenGL读取数据到哪里
-     *  int size, 每个属性的数据的计数，即有多少分量与每个顶点关联；
-     *  这里为每个顶点传了两个分量，着色器中的vec4 a_Position剩下两个分量用默认值
-     *  int type, 数据类型
-     *  boolean normalized, 使用整型时才有用
-     *  int stride, 一个点的属性步长, 字节为单位
-     *  java.nio.Buffer ptr 告诉OpenGL去哪里读取数据
+     * int index, 属性位置，即通知OpenGL读取数据到哪里
+     * int size, 每个属性的数据的计数，即有多少分量与每个顶点关联；
+     * 这里为每个顶点传了两个分量，着色器中的vec4 a_Position剩下两个分量用默认值
+     * int type, 数据类型
+     * boolean normalized, 使用整型时才有用
+     * int stride, 一个点的属性步长, 字节为单位
+     * java.nio.Buffer ptr 告诉OpenGL去哪里读取数据
      * )
      * 通知OpenGL在vertexData读取positionLocation的数据
      *
@@ -156,31 +164,38 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     /**
      * orthoM(
-     *  float[] m, 目标数组，用来存储正交矩阵
-     *  int mOffset, 目标数组偏移量
-     *  float left, minX
-     *  float right, maxX
-     *  float bottom, minY
-     *  float top, maxY
-     *  float near, minZ
-     *  float far, maxZ
+     * float[] m, 目标数组，用来存储正交矩阵
+     * int mOffset, 目标数组偏移量
+     * float left, minX
+     * float right, maxX
+     * float bottom, minY
+     * float top, maxY
+     * float near, minZ
+     * float far, maxZ
      * )
      */
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         // 设置视口尺寸，通知OpenGL用于渲染的surface大小
         glViewport(0, 0, width, height);
-        // 宽高比
-        final float aspectRatio = width > height ?
-                (float) width / (float) height :
-                (float) height / (float) width;
 
-        if (width > height) {
-            orthoM(projectionMatrix, 0,
-                    -aspectRatio, aspectRatio, -1f, 1f, -1f, 1f);
-        } else {
-            orthoM(projectionMatrix, 0,
-                    -1, 1, -aspectRatio, aspectRatio, -1f, 1f);
+        // 创建一个从-1到-10的视锥体
+        MatrixUtils.perspectiveM(projectionMatrix, 45,
+                (float) width / (float) height, 1f, 10f);
+
+        // 设置单位矩阵
+        setIdentityM(modelMatrix, 0);
+        // 改为延z轴平移-2变换矩阵
+        translateM(modelMatrix, 0, 0f, 0f, -3f);
+        // 设置绕x轴旋转
+        rotateM(modelMatrix, 0, -60f, 1f, 0f, 0f);
+
+        // 将透视矩阵 * 平移矩阵，最后结果存在projectionMatrix
+        final float[] temp = new float[16];
+        multiplyMM(temp, 0, projectionMatrix, 0, modelMatrix, 0);
+        System.arraycopy(temp, 0, projectionMatrix, 0, temp.length);
+        for (int i = 0; i < 16; i++) {
+            Log.d(TAG, "useMatrix: " + i + ": +" + projectionMatrix[i]);
         }
     }
 
@@ -228,7 +243,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         glDrawArrays(GL_POINTS, 9, 1);
     }
 
-    void useMatrix(){
+    void useMatrix() {
         glUniformMatrix4fv(uMatrixLocation, 1, false, projectionMatrix, 0);
     }
 }
