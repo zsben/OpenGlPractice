@@ -20,35 +20,34 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     private static final String TAG = "AirHockeyRender";
 
-    // 坐标属性分量维度
+    // 定制属性分量个数
     private static final int POSITION_COMPONENT_COUNT = 2;
     // 每个float的字节数
     private static final int BYTES_PER_FLOAT = 4;
-
-    // 顶点属性数组， 使用三角形卷曲顺序（逆时针）,每个顶点五位，前两位坐标xy，后三位rgb
+    // 定点属性数组， 使用三角形卷曲顺序（逆时针）
     float[] tableVerticesWithTriangles = {
             // Triangle Fan
-            0f, 0f, 1f, 1f, 1f,
-            -0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
-            0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
-            0.5f, 0.5f, 0.7f, 0.7f, 0.7f,
-            -0.5f, 0.5f, 0.7f, 0.7f, 0.7f,
-            -0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
+            0f, 0f,
+            -0.5f, -0.5f,
+            0.5f, -0.5f,
+            0.5f, 0.5f,
+            -0.5f, 0.5f,
+            -0.5f, -0.5f,
 
             // Line 1
-            -0.5f, 0f, 1f, 0f, 0f,
-            0.5f, 0f, 1f, 0f, 0f,
+            -0.5f, 0f,
+            0.5f, 0f,
 
             // Mallets
-            0f, -0.25f, 0f, 0f, 0f,
-            0f, 0.25f, 1f, 0f, 0f
+            0f, -0.5f,
+            0f, 0.5f
     };
 
     // 为片段着色器中的uniform创建一个常量
-    // private static final String U_COLOR = "u_Color";
+    private static final String U_COLOR = "u_Color";
     // 用来容纳它在OpenGL程序对象中位置的变量，程序链接重构后查询该位置
     // 一个uniform的位置在一个程序对象中是唯一的
-    // private int uColorLocation;
+    private int uColorLocation;
 
     // 定义属性的常量，获取属性的位置
     private static final String A_POSITION = "a_Position";
@@ -61,15 +60,6 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     // OpenGL程序的Id
     private int program;
-
-    // 顶点颜色属性常量
-    private static final String A_COLOR = "a_Color";
-    // 颜色属性分量维度
-    private static final int COLOR_COMPONENT_COUNT = 3;
-    // 每个顶点属性步长
-    private static final int STRIDE =
-            (POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT) * BYTES_PER_FLOAT;
-    private int aColorLocation;
 
     public AirHockeyRender(Context context) {
         vertexData = ByteBuffer
@@ -105,11 +95,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         glUseProgram(program);
 
         // 获取u_Color的位置
-        // uColorLocation = glGetUniformLocation(program, U_COLOR);
+        uColorLocation = glGetUniformLocation(program, U_COLOR);
         // 获取a_Position的属性位置
         aPositionLocation = glGetAttribLocation(program, A_POSITION);
-        // 获取a_Color的属性位置
-        aColorLocation = glGetAttribLocation(program, A_COLOR);
 
         // 关联属性与顶点数据的数组
         attachVertexData(aPositionLocation, vertexData);
@@ -118,31 +106,25 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     /**
      * public static void glVertexAttribPointer(
-     *  int index, 属性位置，即通知OpenGL读取数据到哪里
-     *  int size, 每个属性的数据的计数，即有多少分量与每个顶点关联；
-     *  这里为每个顶点传了两个分量，着色器中的vec4 a_Position剩下两个分量用默认值
-     *  int type, 数据类型
-     *  boolean normalized, 使用整型时才有用
-     *  int stride, 一个点的属性步长, 字节为单位
-     *  java.nio.Buffer ptr 告诉OpenGL去哪里读取数据
-     * )
+     *         int index, 属性位置，即通知OpenGL读取数据到哪里
+     *         int size, 每个属性的数据的计数，即有多少分量与每个顶点关联；
+     *                   这里为每个顶点传了两个分量，着色器中的vec4 a_Position剩下两个分量用默认值
+     *         int type, 数据类型
+     *         boolean normalized, 使用整型时才有用
+     *         int stride, 只有档一个数组存储多于一个属性时，它才有意义
+     *         java.nio.Buffer ptr 告诉OpenGL去哪里读取数据
+     *     )
      * 通知OpenGL在vertexData读取positionLocation的数据
      *
      * @param positionLocation
      * @param vertexData
      */
     void attachVertexData(int positionLocation, FloatBuffer vertexData) {
-        // 使能坐标属性
         vertexData.position(0);
         glVertexAttribPointer(positionLocation, POSITION_COMPONENT_COUNT, GL_FLOAT,
-                false, STRIDE, vertexData);
+                false, 0, vertexData);
+        // 使能顶点数组
         glEnableVertexAttribArray(aPositionLocation);
-
-        // 使能颜色属性
-        vertexData.position(POSITION_COMPONENT_COUNT);
-        glVertexAttribPointer(aColorLocation, COLOR_COMPONENT_COUNT, GL_FLOAT,
-                false, STRIDE, vertexData);
-        glEnableVertexAttribArray(aColorLocation);
     }
 
     @Override
@@ -164,14 +146,14 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     /**
      * 画三角形
      * public static native void glDrawArrays(
-     * int mode, 绘制类型
-     * int first, 告诉OpenGL从顶点数组的某个位置开始读顶点
-     * int count, 读入多少数据
+     *          int mode, 绘制类型
+     *          int first, 告诉OpenGL从顶点数组的某个位置开始读顶点
+     *          int count, 读入多少数据
      * );
      */
     void drawTriangles() {
         // 更新着色器中u_Color的值
-        // glUniform4f(uColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+        glUniform4f(uColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
     }
 
@@ -179,7 +161,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
      * 画线
      */
     void drawLines() {
-        // glUniform4f(uColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+        glUniform4f(uColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
         glDrawArrays(GL_LINES, 6, 2);
     }
 
@@ -187,10 +169,10 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
      * 画点
      */
     void drawMallet() {
-        // glUniform4f(uColorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
+        glUniform4f(uColorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
         glDrawArrays(GL_POINTS, 8, 1);
 
-        // glUniform4f(uColorLocation, 1.0f, 1.0f, 0.0f, 1.0f);
+        glUniform4f(uColorLocation, 1.0f, 1.0f, 0.0f, 1.0f);
         glDrawArrays(GL_POINTS, 9, 1);
     }
 
