@@ -15,6 +15,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import static android.opengl.GLES20.*;
+import static android.opengl.Matrix.orthoM;
 
 public class AirHockeyRender implements GLSurfaceView.Renderer {
 
@@ -71,6 +72,12 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
             (POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT) * BYTES_PER_FLOAT;
     private int aColorLocation;
 
+    // 矩阵定义
+    private static final String U_MATRIX = "u_Matrix";
+    private int uMatrixLocation;
+    // 矩阵值 4*4
+    private final float[] projectionMatrix = new float[16];
+
     public AirHockeyRender(Context context) {
         vertexData = ByteBuffer
                 .allocateDirect(tableVerticesWithTriangles.length * BYTES_PER_FLOAT)
@@ -110,6 +117,8 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         aPositionLocation = glGetAttribLocation(program, A_POSITION);
         // 获取a_Color的属性位置
         aColorLocation = glGetAttribLocation(program, A_COLOR);
+        // 获取u_Matrix的地址
+        uMatrixLocation = glGetUniformLocation(program, U_MATRIX);
 
         // 关联属性与顶点数据的数组
         attachVertexData(aPositionLocation, vertexData);
@@ -145,10 +154,34 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         glEnableVertexAttribArray(aColorLocation);
     }
 
+    /**
+     * orthoM(
+     *  float[] m, 目标数组，用来存储正交矩阵
+     *  int mOffset, 目标数组偏移量
+     *  float left, minX
+     *  float right, maxX
+     *  float bottom, minY
+     *  float top, maxY
+     *  float near, minZ
+     *  float far, maxZ
+     * )
+     */
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         // 设置视口尺寸，通知OpenGL用于渲染的surface大小
         glViewport(0, 0, width, height);
+        // 宽高比
+        final float aspectRatio = width > height ?
+                (float) width / (float) height :
+                (float) height / (float) width;
+
+        if (width > height) {
+            orthoM(projectionMatrix, 0,
+                    -aspectRatio, aspectRatio, -1f, 1f, -1f, 1f);
+        } else {
+            orthoM(projectionMatrix, 0,
+                    -1, 1, -aspectRatio, aspectRatio, -1f, 1f);
+        }
     }
 
     @Override
@@ -159,6 +192,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         drawTriangles();
         drawLines();
         drawMallet();
+        useMatrix();
     }
 
     /**
@@ -194,4 +228,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         glDrawArrays(GL_POINTS, 9, 1);
     }
 
+    void useMatrix(){
+        glUniformMatrix4fv(uMatrixLocation, 1, false, projectionMatrix, 0);
+    }
 }
