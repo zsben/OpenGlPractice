@@ -111,6 +111,7 @@ public class ShaderUtils {
 
     /**
      * 验证程序对于当前OpenGL是否有效
+     *
      * @param programObjectId
      * @return
      */
@@ -123,6 +124,30 @@ public class ShaderUtils {
                 + "\nLog: " + glGetProgramInfoLog(programObjectId));
 
         return validStatus[0] != 0;
+    }
+
+
+    /**
+     * 编译vertexShaderSource 和 fragmentShaderSource定义的着色器
+     * @param vertexShaderSource
+     * @param fragmentShaderSource
+     * @return
+     */
+    public static int buildProgram(
+            String vertexShaderSource,
+            String fragmentShaderSource) {
+        int program;
+
+        // 编译
+        int vertexShader = compileVertexShader(vertexShaderSource);
+        int fragmentShader = compileFragmentShader(fragmentShaderSource);
+
+        // 链接
+        program = linkProgram(vertexShader, fragmentShader);
+
+        validateProgram(program);
+
+        return program;
     }
 
 }
