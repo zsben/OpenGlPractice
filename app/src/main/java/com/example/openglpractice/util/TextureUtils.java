@@ -49,7 +49,7 @@ public class TextureUtils {
         // 告诉OpenGL后面的纹理调用应该应用于这个纹理对象
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureObjectIds[0]);
 
-        // 纹理缩小情况使用三线过滤器
+        // 纹理缩小情况使用三线过滤器，在两个等级的Mipmap间再进行线性插值
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
         // 放大过滤器使用双线性过滤
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
