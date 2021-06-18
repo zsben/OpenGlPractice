@@ -2,13 +2,17 @@ package com.example.openglpractice.programs;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.example.openglpractice.R;
+import com.example.openglpractice.util.LogUtils;
 
 /**
  * 纹理着色器程序
  */
 public class TextureShaderProgram extends ShaderProgram {
+
+    private static final String TAG = "TextureShaderProgram";
 
     private final int uMatrixLocation;
     private final int uTextureUnitLocation;
@@ -20,12 +24,20 @@ public class TextureShaderProgram extends ShaderProgram {
         super(context, R.raw.texture_vertex_shader,
                 R.raw.texture_fragment_shader);
 
-        uMatrixLocation = GLES20.glGetAttribLocation(program, U_MATRIX);
-        uTextureUnitLocation = GLES20.glGetAttribLocation(program, U_TEXTURE_UNIT);
+        LogUtils.d(TAG, "create TextureShaderProgram" + program);
+
+        uMatrixLocation = GLES20.glGetUniformLocation(program, U_MATRIX);
+        LogUtils.d(TAG, "uMatrixLocation: " + uMatrixLocation);
+        uTextureUnitLocation = GLES20.glGetUniformLocation(program, U_TEXTURE_UNIT);
+        LogUtils.d(TAG, "uTextureUnitLocation: " + uTextureUnitLocation);
 
         aPositionLocation = GLES20.glGetAttribLocation(program, A_POSITION);
+        LogUtils.d(TAG, "aPositionLocation: " + aPositionLocation);
+
         aTextureCoordinatesLocation =
                 GLES20.glGetAttribLocation(program, A_TEXTURE_COORDINATES);
+        LogUtils.d(TAG, "aTextureCoordinatesLocation: " + aTextureCoordinatesLocation);
+
     }
 
     /**

@@ -64,7 +64,7 @@ public class ShaderUtils {
             // If it failed, delete the shader object.
             glDeleteShader(shaderObjectId);
 
-            LogUtils.e(TAG, "Compilation of shader failed: " + glGetShaderInfoLog(shaderObjectId));
+            LogUtils.e(TAG, "Compilation of shader failed: " + glGetShaderInfoLog(shaderObjectId) + "\n" + shaderCode);
 
             return 0;
         }
@@ -137,6 +137,10 @@ public class ShaderUtils {
             String vertexShaderSource,
             String fragmentShaderSource) {
         int program;
+
+        Log.d(TAG, "buildProgram: vertex: " + vertexShaderSource +
+                "\n--------------------------------\n" +
+                "fragment: " + fragmentShaderSource);
 
         // 编译
         int vertexShader = compileVertexShader(vertexShaderSource);

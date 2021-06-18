@@ -55,8 +55,8 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         table = new Table();
         mallet = new Mallet();
 
-        textureShaderProgram = new TextureShaderProgram(context);
         colorShaderProgram = new ColorShaderProgram(context);
+        textureShaderProgram = new TextureShaderProgram(context);
 
         texture = TextureUtils.loadTexture(
                 context, R.drawable.air_hockey_surface

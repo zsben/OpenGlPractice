@@ -1,5 +1,4 @@
 // 纹理片段着色器
-#version 120
 precision mediump float;
 
 // 用于接收实际纹理数据，sampler2D指的是一个二维纹理数据的数组

@@ -46,7 +46,7 @@ public class TextureUtils {
             return 0;
         }
 
-        // 告诉OpenGL后面的纹理调用应该应用于这个纹理对象
+        // 将获得的纹理对象绑定到2d纹理单元上
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureObjectIds[0]);
 
         // 纹理缩小情况使用三线过滤器，在两个等级的Mipmap间再进行线性插值
@@ -58,7 +58,7 @@ public class TextureUtils {
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
         bitmap.recycle();
 
-        // 生成所有必要的级别
+        // 生成所有级别的mipmap
         GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 
         // 解除此纹理的绑定

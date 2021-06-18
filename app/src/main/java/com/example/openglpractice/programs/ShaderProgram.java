@@ -29,6 +29,7 @@ public class ShaderProgram {
                         context, fragmentShaderResourceId
                 )
         );
+        useProgram();
     }
 
     public void useProgram(){
