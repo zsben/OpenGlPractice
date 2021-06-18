@@ -6,6 +6,11 @@ import android.opengl.GLES20;
 import com.example.openglpractice.util.ShaderUtils;
 import com.example.openglpractice.util.TextResourceUtil;
 
+/**
+ * 通过传入的着色器资源，编译连接成一个着色器程序
+ * 子类在调用构造方法时，会去获取着色器程序中各类变量的地址
+ * 并对变量进行值传递
+ */
 public class ShaderProgram {
 
     // Uniform constants

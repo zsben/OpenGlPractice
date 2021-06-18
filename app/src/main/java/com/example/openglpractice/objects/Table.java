@@ -6,6 +6,9 @@ import com.example.openglpractice.Constants;
 import com.example.openglpractice.data.VertexArray;
 import com.example.openglpractice.programs.TextureShaderProgram;
 
+/**
+ * 实体类，负责调用将顶点数据绑定到顶点上
+ */
 public class Table {
 
     private static final int POSITION_COMPONENT_COUNT = 2;  // 坐标分量

@@ -48,6 +48,12 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         this.context = context;
     }
 
+    /**
+     * surface被创建后的工作：
+     *  1.实例化两个用于保存顶点属性数据的实体类
+     *  2.创建两个着色器程序，分别用于上色和纹理映射
+     *  3.加载图片资源到纹理单元上
+     * */
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         glClearColor(0f, 0f, 0f, 0f);
@@ -65,16 +71,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
 
     /**
-     * orthoM(
-     * float[] m, 目标数组，用来存储正交矩阵
-     * int mOffset, 目标数组偏移量
-     * float left, minX
-     * float right, maxX
-     * float bottom, minY
-     * float top, maxY
-     * float near, minZ
-     * float far, maxZ
-     * )
+     * surface窗口大小被改变后的工作
+     *  1.设置透视矩阵
+     *  2.平移，旋转
      */
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -101,6 +100,10 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         }
     }
 
+    /**
+     * 绘制每一帧的工作
+     * 将纹理与顶点等绘制到OpenGL图元上
+     * */
     @Override
     public void onDrawFrame(GL10 gl) {
         // 清空渲染表面
