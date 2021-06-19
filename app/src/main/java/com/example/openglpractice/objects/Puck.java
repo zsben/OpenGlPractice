@@ -1,32 +1,25 @@
 package com.example.openglpractice.objects;
 
-import android.opengl.GLES20;
-
-import com.example.openglpractice.Constants;
 import com.example.openglpractice.data.VertexArray;
 import com.example.openglpractice.programs.ColorShaderProgram;
 import com.example.openglpractice.util.Geometry;
 
 import java.util.List;
 
-public class Mallet {
+public class Puck {
 
-    private static final int POSITION_COMPONENT_COUNT = 3;  // 顶点坐标属性维度
+    private static final int POSITION_COMPONENT_COUNT = 3;
 
-    public final float radius;
-    public final float height;
+    public final float radius, height;
 
     private final VertexArray vertexArray;
     private final List<ObjectBuilder.DrawCommand> drawCommandList;
 
-    public Mallet(float radius, float height, int numPointsAroundMallet){
-        ObjectBuilder.GeneratedData generatedData = ObjectBuilder.createMallet(
-                new Geometry.Point(0f, 0f, 0f),
-                radius,
-                height,
-                numPointsAroundMallet
+    public Puck(float radius, float height, int numPointsAroundPuck) {
+        ObjectBuilder.GeneratedData generatedData = ObjectBuilder.createPuck(  // 生成所有顶点数据
+                new Geometry.Cylinder(new Geometry.Point(0f, 0f, 0f), radius, height),
+                numPointsAroundPuck
         );
-
         this.radius = radius;
         this.height = height;
 
@@ -34,7 +27,7 @@ public class Mallet {
         drawCommandList = generatedData.drawList;
     }
 
-    public void bindData(ColorShaderProgram colorShaderProgram){
+    public void bindData(ColorShaderProgram colorShaderProgram) {
         vertexArray.setVertexAttribPointer(
                 0,
                 colorShaderProgram.getPositionAttributeLocation(),
@@ -43,9 +36,10 @@ public class Mallet {
         );
     }
 
-    public void draw(){
+    public void draw() {
         for (ObjectBuilder.DrawCommand drawCommand: drawCommandList) {
             drawCommand.draw();
         }
     }
+
 }

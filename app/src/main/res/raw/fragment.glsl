@@ -7,9 +7,6 @@ precision mediump float;
 // 也是一个四分向量，分别对应argb, 没有默认值
 uniform vec4 u_Color;
 
-// 把同名varying传入片段着色器
-varying vec4 v_Color;
-
 void main(){
     // 把uniform里定义的颜色赋值到gl_FragColor
     // OpenGL会用gl_FragColor作为当前片段的最终颜色
@@ -17,5 +14,5 @@ void main(){
     // gl_FragColor = u_Color;
 
     // 代替原来的u_Color
-    gl_FragColor = v_Color;
+    gl_FragColor = u_Color;
 }

@@ -12,9 +12,9 @@ public class ColorShaderProgram extends ShaderProgram {
     private final static String TAG = "ColorShaderProgram";
 
     private final int uMatrixLocation;
+    private final int uColorLocation;
 
     private final int aPositionLocation;
-    private final int aColorLocation;
 
     public ColorShaderProgram(Context context) {
         super(context, R.raw.vertex_shader, R.raw.fragment);
@@ -27,19 +27,17 @@ public class ColorShaderProgram extends ShaderProgram {
         aPositionLocation = GLES20.glGetAttribLocation(program, A_POSITION);
         LogUtils.d(TAG, "" + aPositionLocation);
 
-        aColorLocation = GLES20.glGetAttribLocation(program, A_COLOR);
-        LogUtils.d(TAG, "" + aColorLocation);
+        uColorLocation = GLES20.glGetUniformLocation(program, U_COLOR);
+        LogUtils.d(TAG, "" + uColorLocation);
     }
 
-    public void setUniforms(float[] matrix){
+    public void setUniforms(float[] matrix, float r, float g, float b){
         GLES20.glUniformMatrix4fv(uMatrixLocation, 1, false, matrix, 0);
+        GLES20.glUniform4f(uColorLocation, r, g, b, 1f);
     }
 
     public int getPositionAttributeLocation() {
         return aPositionLocation;
     }
 
-    public int getColorAttributeLocation() {
-        return aColorLocation;
-    }
 }
