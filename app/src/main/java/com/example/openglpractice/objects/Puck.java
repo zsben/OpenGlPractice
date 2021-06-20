@@ -15,8 +15,14 @@ public class Puck {
     private final VertexArray vertexArray;
     private final List<ObjectBuilder.DrawCommand> drawCommandList;
 
+    /**
+     * 生成一个冰球的顶点数据与绘制命令
+     * @param radius
+     * @param height
+     * @param numPointsAroundPuck
+     */
     public Puck(float radius, float height, int numPointsAroundPuck) {
-        ObjectBuilder.GeneratedData generatedData = ObjectBuilder.createPuck(  // 生成所有顶点数据
+        ObjectBuilder.GeneratedData generatedData = ObjectBuilder.createPuck(
                 new Geometry.Cylinder(new Geometry.Point(0f, 0f, 0f), radius, height),
                 numPointsAroundPuck
         );

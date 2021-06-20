@@ -19,6 +19,12 @@ public class Mallet {
     private final VertexArray vertexArray;
     private final List<ObjectBuilder.DrawCommand> drawCommandList;
 
+    /**
+     * 生成一个木槌的所有数据
+     * @param radius
+     * @param height
+     * @param numPointsAroundMallet
+     */
     public Mallet(float radius, float height, int numPointsAroundMallet){
         ObjectBuilder.GeneratedData generatedData = ObjectBuilder.createMallet(
                 new Geometry.Point(0f, 0f, 0f),

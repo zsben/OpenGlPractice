@@ -14,10 +14,13 @@ import static android.opengl.GLES20.glDrawArrays;
 
 public class ObjectBuilder {
 
-    static interface DrawCommand { // 绘制命令接口
+    interface DrawCommand { // 绘制命令接口
         void draw();
     }
 
+    /**
+     * build后的dataHolder
+     */
     static class GeneratedData {
         final float[] vertexData;
         final List<DrawCommand> drawList;
@@ -50,7 +53,7 @@ public class ObjectBuilder {
         return (numPoints + 1) * 2; // 圆周点 * 2
     }
 
-    static GeneratedData createPuck(Geometry.Cylinder puck, int numPoints) { // 用圆柱体创造一个冰球
+    static GeneratedData createPuck(Geometry.Cylinder puck, int numPoints) { // 用圆柱体创造冰球顶点数据
         int size = sizeOfCircleInVertices(numPoints)
                 + sizeOfOpenCylinderInVertices(numPoints);
 
@@ -67,7 +70,7 @@ public class ObjectBuilder {
         return builder.build();
     }
 
-    // 创建一个木槌，手柄高度75%，基部高度25%，基部宽度是手柄三倍
+    // 创建一个木槌顶点数据，手柄高度75%，基部高度25%，基部宽度是手柄三倍
     static GeneratedData createMallet(Geometry.Point center, float radius, float height, int numPoints) {
         int size = sizeOfCircleInVertices(numPoints) * 2
                 + sizeOfOpenCylinderInVertices(numPoints) * 2;
@@ -110,7 +113,12 @@ public class ObjectBuilder {
         return builder.build();
     }
 
-    private void appendCircle(Geometry.Circle circle, int numPoints) { // 添加一个圆,将绘制命令添加到drawList中
+    /**
+     * 添加一个圆,将顶点数据添加到vertexData中，绘制命令添加到drawList中
+     * @param circle
+     * @param numPoints
+     */
+    private void appendCircle(Geometry.Circle circle, int numPoints) {
 
         final int startVertex = offset / FLOATS_PER_VERTEX; // 绘制起始顶点数
         final int numVertices = sizeOfCircleInVertices(numPoints); // 绘制顶点个数
@@ -136,6 +144,11 @@ public class ObjectBuilder {
         });
     }
 
+    /**
+     * 添加一个圆柱侧面，将顶点数据添加到vertexData中，绘制命令添加到drawList中
+     * @param cylinder
+     * @param numPoints
+     */
     private void appendOpenCylinder(Geometry.Cylinder cylinder, int numPoints) { // 添加一个圆柱,将绘制命令添加到drawList中
 
         final int startVertex = offset / FLOATS_PER_VERTEX;

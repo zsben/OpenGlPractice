@@ -71,7 +71,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         glClearColor(0f, 0f, 0f, 0f);
 
         table = new Table();
-        mallet = new Mallet(0.08f, 0.15f, 32);
+        mallet = new Mallet(0.08f, 0.15f, 32); // 生成数据
         puck = new Puck(0.06f, 0.02f, 32);
 
         colorShaderProgram = new ColorShaderProgram(context);
@@ -84,9 +84,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
 
     /**
-     * surface窗口大小被改变后的工作
-     * 1.设置透视矩阵
-     * 2.平移，旋转
+     * 设置视口
+     * 生成透视矩阵
+     * 生成视图矩阵
      */
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -106,24 +106,24 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     }
 
     /**
-     * 绘制每一帧的工作
-     * 将纹理与顶点等绘制到OpenGL图元上
+     *
      */
     @Override
     public void onDrawFrame(GL10 gl) {
         // 清空渲染表面
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // 将透视矩阵与视图矩阵相乘
         multiplyMM(projectionViewMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
 
-        // 绘制桌子
+        // 生成桌子的模型矩阵，绘制桌子
         positionTableInScene();
         textureShaderProgram.useProgram(); // 使用当前着色器
         textureShaderProgram.setUniforms(projectionMatrix, texture); // 设置矩阵与纹理数据
         table.bindData(textureShaderProgram); // 绑定顶点属性
         table.draw(); // 绘制
 
-        // 绘制木槌
+        // 生成木槌的模型矩阵，绘制木槌
         positionObjectInScene(0f, mallet.height / 2f, -0.4f);
         colorShaderProgram.useProgram();
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 1f, 0f, 0f);
@@ -134,6 +134,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 1f, 0f, 0f);
         mallet.draw();
 
+        // 生成冰球的模型矩阵，绘制冰球
         positionObjectInScene(0f, puck.height / 2f, 0f);
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 0.8f, 0.8f, 1f);
         puck.bindData(colorShaderProgram);

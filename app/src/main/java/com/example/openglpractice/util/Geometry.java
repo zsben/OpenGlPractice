@@ -2,6 +2,9 @@ package com.example.openglpractice.util;
 
 public class Geometry {
 
+    /**
+     * 点坐标
+     */
     public static class Point {
         public final float x, y, z;
         public Point(float x, float y, float z) {
@@ -15,6 +18,9 @@ public class Geometry {
         }
     }
 
+    /**
+     * 圆（圆心点，半径）
+     */
     public static class Circle {
         public final Point center;
         public final float radius;
@@ -29,6 +35,9 @@ public class Geometry {
         }
     }
 
+    /**
+     * 圆柱（圆心点，半径，高度）
+     */
     public static class Cylinder {
         public final Point center;
         public final float radius;
