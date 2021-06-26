@@ -10,6 +10,7 @@ import com.example.openglpractice.objects.Table;
 import com.example.openglpractice.programs.ColorShaderProgram;
 import com.example.openglpractice.programs.TextureShaderProgram;
 import com.example.openglpractice.util.Geometry;
+import com.example.openglpractice.util.LogUtils;
 import com.example.openglpractice.util.MatrixUtils;
 import com.example.openglpractice.util.ShaderUtils;
 import com.example.openglpractice.util.TextResourceUtil;
@@ -145,17 +146,20 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         table.draw(); // 绘制
 
         // 生成木槌的模型矩阵，绘制木槌
-        positionObjectInScene(
-                blueMalletPosition.x,
-                blueMalletPosition.y,
-                blueMalletPosition.z
-        );
+        positionObjectInScene(0f, mallet.height / 2f, -0.4f);
         colorShaderProgram.useProgram();
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 1f, 0f, 0f);
         mallet.bindData(colorShaderProgram);
         mallet.draw();
 
-        positionObjectInScene(0f, mallet.height / 2f, 0.4f);
+        positionObjectInScene(
+                blueMalletPosition.x,
+                blueMalletPosition.y,
+                blueMalletPosition.z
+        );
+        LogUtils.d(TAG, "blue X: " + blueMalletPosition.x
+            + " blue Y: " + blueMalletPosition.y
+            + " blue Z: " + blueMalletPosition.z);
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 0f, 0f, 1f);
         mallet.draw();
 
@@ -219,7 +223,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
             Geometry.Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
             Geometry.Plane plane = new Geometry.Plane(
                     new Geometry.Point(0, 0, 0),
-                    new Geometry.Vector(0, 1, 1));
+                    new Geometry.Vector(0, 1, 0));
             Geometry.Point touchedPoint = Geometry.intersectionPoint(ray, plane);
             blueMalletPosition =
                     new Geometry.Point(touchedPoint.x, mallet.height / 2f, touchedPoint.z);
@@ -236,7 +240,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
      */
     private Geometry.Ray convertNormalized2DPointToRay(float normalizedX, float normalizedY) {
         final float[] nearPointNdc = {normalizedX, normalizedY, -1, 1}; // 归一化坐标体系下的近平面点
-        final float[] farPointNdc = {normalizedY, normalizedY, 1, 1}; // 归一化坐标体系下的远平面点
+        final float[] farPointNdc = {normalizedX, normalizedY, 1, 1}; // 归一化坐标体系下的远平面点
 
         final float[] nearPointWorld = new float[4]; // 世界坐标系下的近平面点
         final float[] farPointWorld = new float[4];
@@ -257,6 +261,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
                 new Geometry.Point(nearPointWorld[0], nearPointWorld[1], nearPointWorld[2]);
         Geometry.Point farPointRay =
                 new Geometry.Point(farPointWorld[0], farPointWorld[1], farPointWorld[2]);
+
+        LogUtils.d(TAG, "nearPointRay: " + nearPointRay
+            + "\nfarPointRay: " + farPointRay);
 
         return new Geometry.Ray(nearPointRay,
                 Geometry.vectorBetween(nearPointRay, farPointRay));

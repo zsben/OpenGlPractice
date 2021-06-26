@@ -24,6 +24,15 @@ public class Geometry {
                     y + vector.y,
                     z + vector.z);
         }
+
+        @Override
+        public String toString() {
+            return "Point{" +
+                    "x=" + x +
+                    ", y=" + y +
+                    ", z=" + z +
+                    '}';
+        }
     }
 
     /**
