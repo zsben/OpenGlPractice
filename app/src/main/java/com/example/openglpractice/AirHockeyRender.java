@@ -113,7 +113,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
         setLookAtM(
                 viewMatrix, 0, // 结果矩阵
-                eyeX, 1.2f, eyeZ, // 眼睛位置
+                0, 1.2f, 2.2f, // 眼睛位置
                 0f, 0f, 0f, // 眼睛看的位置
                 0f, 1f, 0f // 头顶方向
         );
