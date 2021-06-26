@@ -99,7 +99,7 @@ public class ObjectBuilder {
 
         Geometry.Circle handleCircle = new Geometry.Circle( // 手柄顶部圆，木槌中心上移height/2
                 center.translateY(height / 2f),
-                radius
+                handleRadius
         );
         Geometry.Cylinder handleCylinder = new Geometry.Cylinder(
                 handleCircle.center.translateY(-handleHeight / 2f),

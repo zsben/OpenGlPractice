@@ -96,22 +96,27 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         // 创建一个从-1到-10的视锥体
         MatrixUtils.perspectiveM(projectionMatrix, 45,
                 (float) width / (float) height, 1f, 10f);
-
-        setLookAtM(
-                viewMatrix, 0, // 结果矩阵
-                0f, 1.2f, 2.2f, // 眼睛位置
-                0f, 0f, 0f, // 眼睛看的位置
-                0f, 1f, 0f // 头顶方向
-        );
     }
 
-    /**
-     *
-     */
+
+    private float eyeAngle = 0f;
+    private float radius = 3f;
+
     @Override
     public void onDrawFrame(GL10 gl) {
         // 清空渲染表面
         glClear(GL_COLOR_BUFFER_BIT);
+
+        eyeAngle += 0.1f;
+        float eyeX = 3f * (float) Math.cos(eyeAngle);
+        float eyeZ = 3f * (float) Math.sin(eyeAngle);
+
+        setLookAtM(
+                viewMatrix, 0, // 结果矩阵
+                eyeX, 1.2f, eyeZ, // 眼睛位置
+                0f, 0f, 0f, // 眼睛看的位置
+                0f, 1f, 0f // 头顶方向
+        );
 
         // 将透视矩阵与视图矩阵相乘
         multiplyMM(projectionViewMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
@@ -119,7 +124,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         // 生成桌子的模型矩阵，绘制桌子
         positionTableInScene();
         textureShaderProgram.useProgram(); // 使用当前着色器
-        textureShaderProgram.setUniforms(projectionMatrix, texture); // 设置矩阵与纹理数据
+        textureShaderProgram.setUniforms(projectionViewModelMatrix, texture); // 设置矩阵与纹理数据
         table.bindData(textureShaderProgram); // 绑定顶点属性
         table.draw(); // 绘制
 
@@ -131,7 +136,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         mallet.draw();
 
         positionObjectInScene(0f, mallet.height / 2f, 0.4f);
-        colorShaderProgram.setUniforms(projectionViewModelMatrix, 1f, 0f, 0f);
+        colorShaderProgram.setUniforms(projectionViewModelMatrix, 0f, 0f, 1f);
         mallet.draw();
 
         // 生成冰球的模型矩阵，绘制冰球
@@ -154,7 +159,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     /**
      * 生成其他组件的model矩阵,自身带z坐标，只需要平移即可
      */
-    private void positionObjectInScene(float x, float y, float z){
+    private void positionObjectInScene(float x, float y, float z) {
         setIdentityM(modelMatrix, 0);
         translateM(modelMatrix, 0, x, y, z);
         multiplyMM(projectionViewModelMatrix, 0,
