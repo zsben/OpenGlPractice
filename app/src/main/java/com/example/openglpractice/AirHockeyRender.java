@@ -9,6 +9,7 @@ import com.example.openglpractice.objects.Puck;
 import com.example.openglpractice.objects.Table;
 import com.example.openglpractice.programs.ColorShaderProgram;
 import com.example.openglpractice.programs.TextureShaderProgram;
+import com.example.openglpractice.util.Geometry;
 import com.example.openglpractice.util.MatrixUtils;
 import com.example.openglpractice.util.ShaderUtils;
 import com.example.openglpractice.util.TextResourceUtil;
@@ -22,7 +23,9 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import static android.opengl.GLES20.*;
+import static android.opengl.Matrix.invertM;
 import static android.opengl.Matrix.multiplyMM;
+import static android.opengl.Matrix.multiplyMV;
 import static android.opengl.Matrix.orthoM;
 import static android.opengl.Matrix.rotateM;
 import static android.opengl.Matrix.setIdentityM;
@@ -47,6 +50,11 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     private final float[] projectionViewMatrix = new float[16];
     private final float[] projectionViewModelMatrix = new float[16];
 
+    /**
+     * 逆视图矩阵和投影矩阵
+     */
+    private final float[] invertedViewProjectionMatrix = new float[16];
+
     private Table table;
     private Mallet mallet;
     private Puck puck;
@@ -55,6 +63,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     private ColorShaderProgram colorShaderProgram;
 
     private int texture;
+
+    private boolean malletPressed = false;
+    private Geometry.Point blueMalletPosition;
 
     public AirHockeyRender(Context context) {
         this.context = context;
@@ -80,6 +91,8 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         texture = TextureUtils.loadTexture(
                 context, R.drawable.air_hockey_surface
         );
+
+        blueMalletPosition = new Geometry.Point(0f, mallet.height / 2, 0.4f);
     }
 
 
@@ -121,6 +134,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         // 将透视矩阵与视图矩阵相乘
         multiplyMM(projectionViewMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
 
+        // 获得你矩阵
+        invertM(invertedViewProjectionMatrix, 0, projectionViewMatrix, 0);
+
         // 生成桌子的模型矩阵，绘制桌子
         positionTableInScene();
         textureShaderProgram.useProgram(); // 使用当前着色器
@@ -129,7 +145,11 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         table.draw(); // 绘制
 
         // 生成木槌的模型矩阵，绘制木槌
-        positionObjectInScene(0f, mallet.height / 2f, -0.4f);
+        positionObjectInScene(
+                blueMalletPosition.x,
+                blueMalletPosition.y,
+                blueMalletPosition.z
+        );
         colorShaderProgram.useProgram();
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 1f, 0f, 0f);
         mallet.bindData(colorShaderProgram);
@@ -164,6 +184,93 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         translateM(modelMatrix, 0, x, y, z);
         multiplyMM(projectionViewModelMatrix, 0,
                 projectionViewMatrix, 0, modelMatrix, 0);
+    }
+
+    /**
+     * 响应按下事件
+     *
+     * @param normalizedX
+     * @param normalizedY
+     */
+    public void handleTouchPress(float normalizedX, float normalizedY) {
+        // 获取三位世界射线
+        Geometry.Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
+        // 获取木槌的包围球
+        Geometry.Sphere malletBoundingSphere = new Geometry.Sphere(
+                new Geometry.Point(
+                    blueMalletPosition.x,
+                    blueMalletPosition.y,
+                    blueMalletPosition.z
+                ),
+                mallet.height / 2
+        );
+        // 检测是否按到了木槌
+        malletPressed = Geometry.intersects(malletBoundingSphere, ray);
+    }
+
+    /**
+     * 响应移动事件
+     *  只有被按压到时才会移动
+     * @param normalizedX
+     * @param normalizedY
+     */
+    public void handleTouchDrag(float normalizedX, float normalizedY) {
+        if (malletPressed) {
+            Geometry.Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
+            Geometry.Plane plane = new Geometry.Plane(
+                    new Geometry.Point(0, 0, 0),
+                    new Geometry.Vector(0, 1, 1));
+            Geometry.Point touchedPoint = Geometry.intersectionPoint(ray, plane);
+            blueMalletPosition =
+                    new Geometry.Point(touchedPoint.x, mallet.height / 2f, touchedPoint.z);
+        }
+    }
+
+    /**
+     * 将触摸的二维坐标转换成三位空间的射线
+     * 原理：将被触摸的归一化点通过逆矩阵，还原成视锥体上远近平面的两个点，以此建立一条世界坐标体系下的射线
+     *
+     * @param normalizedX
+     * @param normalizedY
+     * @return
+     */
+    private Geometry.Ray convertNormalized2DPointToRay(float normalizedX, float normalizedY) {
+        final float[] nearPointNdc = {normalizedX, normalizedY, -1, 1}; // 归一化坐标体系下的近平面点
+        final float[] farPointNdc = {normalizedY, normalizedY, 1, 1}; // 归一化坐标体系下的远平面点
+
+        final float[] nearPointWorld = new float[4]; // 世界坐标系下的近平面点
+        final float[] farPointWorld = new float[4];
+
+        multiplyMV(
+                nearPointWorld, 0, invertedViewProjectionMatrix, 0, nearPointNdc, 0
+        );
+        multiplyMV(
+                farPointWorld, 0, invertedViewProjectionMatrix, 0, farPointNdc, 0
+        );
+
+        //撤销透视除法的影响，直接使用逆矩阵的反转w即可
+        divideByW(nearPointNdc);
+        divideByW(farPointNdc);
+
+        // 通过顶点构造射线
+        Geometry.Point nearPointRay =
+                new Geometry.Point(nearPointWorld[0], nearPointWorld[1], nearPointWorld[2]);
+        Geometry.Point farPointRay =
+                new Geometry.Point(farPointWorld[0], farPointWorld[1], farPointWorld[2]);
+
+        return new Geometry.Ray(nearPointRay,
+                Geometry.vectorBetween(nearPointRay, farPointRay));
+    }
+
+    /**
+     * 将vector向量除以w，撤销透视除法影响
+     *
+     * @param vector
+     */
+    private void divideByW(float[] vector) {
+        vector[0] /= vector[3];
+        vector[1] /= vector[3];
+        vector[2] /= vector[3];
     }
 
 }
