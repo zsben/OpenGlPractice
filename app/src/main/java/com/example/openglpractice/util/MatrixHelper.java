@@ -1,6 +1,6 @@
 package com.example.openglpractice.util;
 
-public class MatrixUtils {
+public class MatrixHelper {
 
     /**
      * 创建透视投影

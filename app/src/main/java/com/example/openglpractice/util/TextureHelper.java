@@ -6,7 +6,7 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
-public class TextureUtils {
+public class TextureHelper {
 
     private static final String TAG = "TextureUtils";
 

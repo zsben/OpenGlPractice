@@ -9,8 +9,8 @@ import com.example.openglpractice.objects.Table;
 import com.example.openglpractice.programs.ColorShaderProgram;
 import com.example.openglpractice.programs.TextureShaderProgram;
 import com.example.openglpractice.util.LogUtils;
-import com.example.openglpractice.util.MatrixUtils;
-import com.example.openglpractice.util.TextureUtils;
+import com.example.openglpractice.util.MatrixHelper;
+import com.example.openglpractice.util.TextureHelper;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -24,6 +24,8 @@ import static android.opengl.Matrix.setIdentityM;
 import static android.opengl.Matrix.setLookAtM;
 import static android.opengl.Matrix.translateM;
 import static com.example.openglpractice.util.Geometry.*;
+import com.example.openglpractice.util.Geometry;
+
 
 public class AirHockeyRender implements GLSurfaceView.Renderer {
 
@@ -93,7 +95,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         colorShaderProgram = new ColorShaderProgram(context);
         textureShaderProgram = new TextureShaderProgram(context);
 
-        texture = TextureUtils.loadTexture(
+        texture = TextureHelper.loadTexture(
                 context, R.drawable.air_hockey_surface
         );
 
@@ -114,7 +116,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         glViewport(0, 0, width, height);
 
         // 创建一个从-1到-10的视锥体
-        MatrixUtils.perspectiveM(projectionMatrix, 45,
+        MatrixHelper.perspectiveM(projectionMatrix, 45,
                 (float) width / (float) height, 1f, 10f);
     }
 
