@@ -66,14 +66,14 @@ public class AirHockeyActivity extends AppCompatActivity {
                         glSurfaceView.queueEvent(new Runnable() { // 去GLThread工作
                             @Override
                             public void run() {
-                                airHockeyRender.handleTouchPress(normalizedX, normalizedY);
+                                airHockeyRender.handleTouchPress(normalizedX, -normalizedY);
                             }
                         });
                     } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
                         glSurfaceView.queueEvent(new Runnable() {
                             @Override
                             public void run() {
-                                airHockeyRender.handleTouchDrag(normalizedX, normalizedY);
+                                airHockeyRender.handleTouchDrag(normalizedX, -normalizedY);
                             }
                         });
                     }

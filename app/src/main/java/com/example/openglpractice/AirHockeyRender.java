@@ -24,6 +24,7 @@ import static android.opengl.Matrix.setIdentityM;
 import static android.opengl.Matrix.setLookAtM;
 import static android.opengl.Matrix.translateM;
 import static com.example.openglpractice.util.Geometry.*;
+
 import com.example.openglpractice.util.Geometry;
 
 
@@ -131,22 +132,24 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         if (puckPosition.x < leftBound + puck.radius
                 || puckPosition.x > rightBound - puck.radius) {
             puckVector = new Vector(-puckVector.x, puckVector.y, puckVector.z);
-            puckVector = puckVector.scale(0.99f);
+            puckVector = puckVector.scale(0.98f);
             puckVector.print();
         }
 
         if (puckPosition.z < farBound + puck.radius
                 || puckPosition.z > nearBound - puck.radius) {
             puckVector = new Vector(puckVector.x, puckVector.y, -puckVector.z);
-            puckVector = puckVector.scale(0.99f);
+            puckVector = puckVector.scale(0.98f);
             puckVector.print();
         }
+        puckVector = puckVector.scale(0.99f);
+
 
         puckPosition = new Point(
                 clamp(puckPosition.x,
                         leftBound + mallet.radius,
                         rightBound - mallet.radius),
-                mallet.height / 2f,
+                puck.height / 2,
                 clamp(puckPosition.z,
                         farBound + mallet.radius,
                         nearBound - mallet.radius)
@@ -192,8 +195,8 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
                 blueMalletPosition.z
         );
         LogUtils.d(TAG, "blue X: " + blueMalletPosition.x
-            + " blue Y: " + blueMalletPosition.y
-            + " blue Z: " + blueMalletPosition.z);
+                + " blue Y: " + blueMalletPosition.y
+                + " blue Z: " + blueMalletPosition.z);
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 0f, 0f, 1f);
         mallet.draw();
 
@@ -203,7 +206,6 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         puck.bindData(colorShaderProgram);
         puck.draw();
 
-        puckVector = puckVector.scale(0.99f);
     }
 
     /**
@@ -238,9 +240,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         // 获取木槌的包围球
         Sphere malletBoundingSphere = new Sphere(
                 new Point(
-                    blueMalletPosition.x,
-                    blueMalletPosition.y,
-                    blueMalletPosition.z
+                        blueMalletPosition.x,
+                        blueMalletPosition.y,
+                        blueMalletPosition.z
                 ),
                 mallet.height / 2
         );
@@ -250,6 +252,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     /**
      * 另value值限制在min与max间
+     *
      * @param value
      * @param min
      * @param max
@@ -262,7 +265,8 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     /**
      * 响应移动事件
-     *  只有被按压到时才会移动
+     * 只有被按压到时才会移动
+     *
      * @param normalizedX
      * @param normalizedY
      */
@@ -295,7 +299,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
             // 碰撞后的方向连线为冰球与木槌连线的方向
             if (distance < (puck.radius + mallet.radius)) {
                 puckVector = vectorBetween(previousBlueMalletPosition, puckPosition);
-                puckVector = puckVector.scale(0.99f);
+                puckVector = puckVector.scale(0.95f);
                 puckVector.print();
             }
         }
@@ -334,7 +338,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
                 new Point(farPointWorld[0], farPointWorld[1], farPointWorld[2]);
 
         LogUtils.d(TAG, "nearPointRay: " + nearPointWorld[0] + "," + nearPointWorld[1] + "," + nearPointWorld[2] + "," + nearPointWorld[3]
-            + "\nfarPointRay: " + farPointWorld[0] + "," + farPointWorld[1] + "," + farPointWorld[2] + "," + farPointWorld[3]);
+                + "\nfarPointRay: " + farPointWorld[0] + "," + farPointWorld[1] + "," + farPointWorld[2] + "," + farPointWorld[3]);
 
         return new Ray(nearPointRay,
                 vectorBetween(nearPointRay, farPointRay));
