@@ -139,6 +139,10 @@ public class Geometry {
                     z * f
             );
         }
+
+        public void print() {
+            LogUtils.d("Vector", "Vector x: " + x + ",y:" + y + ",z:" + z);
+        }
     }
 
     /**

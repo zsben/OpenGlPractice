@@ -2,23 +2,15 @@ package com.example.openglpractice;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
-import android.util.Log;
 
 import com.example.openglpractice.objects.Mallet;
 import com.example.openglpractice.objects.Puck;
 import com.example.openglpractice.objects.Table;
 import com.example.openglpractice.programs.ColorShaderProgram;
 import com.example.openglpractice.programs.TextureShaderProgram;
-import com.example.openglpractice.util.Geometry;
 import com.example.openglpractice.util.LogUtils;
 import com.example.openglpractice.util.MatrixUtils;
-import com.example.openglpractice.util.ShaderUtils;
-import com.example.openglpractice.util.TextResourceUtil;
 import com.example.openglpractice.util.TextureUtils;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -27,11 +19,11 @@ import static android.opengl.GLES20.*;
 import static android.opengl.Matrix.invertM;
 import static android.opengl.Matrix.multiplyMM;
 import static android.opengl.Matrix.multiplyMV;
-import static android.opengl.Matrix.orthoM;
 import static android.opengl.Matrix.rotateM;
 import static android.opengl.Matrix.setIdentityM;
 import static android.opengl.Matrix.setLookAtM;
 import static android.opengl.Matrix.translateM;
+import static com.example.openglpractice.util.Geometry.*;
 
 public class AirHockeyRender implements GLSurfaceView.Renderer {
 
@@ -66,7 +58,19 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
     private int texture;
 
     private boolean malletPressed = false;
-    private Geometry.Point blueMalletPosition;
+    private Point blueMalletPosition;
+
+    /**
+     * 定义桌子的四个角落
+     */
+    private final float leftBound = -0.5f;
+    private final float rightBound = 0.5f;
+    private final float farBound = -0.8f;
+    private final float nearBound = 0.8f;
+
+    private Point previousBlueMalletPosition; // 上一个时间点的位置
+    private Point puckPosition; // 冰球位置
+    private Vector puckVector; // 冰球速度
 
     public AirHockeyRender(Context context) {
         this.context = context;
@@ -93,9 +97,11 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
                 context, R.drawable.air_hockey_surface
         );
 
-        blueMalletPosition = new Geometry.Point(0f, mallet.height / 2, 0.4f);
-    }
+        blueMalletPosition = new Point(0f, mallet.height / 2, 0.4f);
 
+        puckPosition = new Point(0f, puck.height / 2f, 0f);
+        puckVector = new Vector(0f, 0f, 0f);
+    }
 
     /**
      * 设置视口
@@ -118,6 +124,32 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        // 冰球位移一段
+        puckPosition = puckPosition.translate(puckVector);
+        if (puckPosition.x < leftBound + puck.radius
+                || puckPosition.x > rightBound - puck.radius) {
+            puckVector = new Vector(-puckVector.x, puckVector.y, puckVector.z);
+            puckVector = puckVector.scale(0.99f);
+            puckVector.print();
+        }
+
+        if (puckPosition.z < farBound + puck.radius
+                || puckPosition.z > nearBound - puck.radius) {
+            puckVector = new Vector(puckVector.x, puckVector.y, -puckVector.z);
+            puckVector = puckVector.scale(0.99f);
+            puckVector.print();
+        }
+
+        puckPosition = new Point(
+                clamp(puckPosition.x,
+                        leftBound + mallet.radius,
+                        rightBound - mallet.radius),
+                mallet.height / 2f,
+                clamp(puckPosition.z,
+                        farBound + mallet.radius,
+                        nearBound - mallet.radius)
+        );
+
         // 清空渲染表面
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -127,7 +159,7 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
 
         setLookAtM(
                 viewMatrix, 0, // 结果矩阵
-                0, 1.2f, 2.2f, // 眼睛位置
+                0, 1.2f, 3f, // 眼睛位置
                 0f, 0f, 0f, // 眼睛看的位置
                 0f, 1f, 0f // 头顶方向
         );
@@ -164,10 +196,12 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         mallet.draw();
 
         // 生成冰球的模型矩阵，绘制冰球
-        positionObjectInScene(0f, puck.height / 2f, 0f);
+        positionObjectInScene(puckPosition.x, puckPosition.y, puckPosition.z);
         colorShaderProgram.setUniforms(projectionViewModelMatrix, 0.8f, 0.8f, 1f);
         puck.bindData(colorShaderProgram);
         puck.draw();
+
+        puckVector = puckVector.scale(0.99f);
     }
 
     /**
@@ -198,10 +232,10 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
      */
     public void handleTouchPress(float normalizedX, float normalizedY) {
         // 获取三位世界射线
-        Geometry.Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
+        Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
         // 获取木槌的包围球
-        Geometry.Sphere malletBoundingSphere = new Geometry.Sphere(
-                new Geometry.Point(
+        Sphere malletBoundingSphere = new Sphere(
+                new Point(
                     blueMalletPosition.x,
                     blueMalletPosition.y,
                     blueMalletPosition.z
@@ -209,8 +243,20 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
                 mallet.height / 2
         );
         // 检测是否按到了木槌
-        malletPressed = Geometry.intersects(malletBoundingSphere, ray);
+        malletPressed = intersects(malletBoundingSphere, ray);
     }
+
+    /**
+     * 另value值限制在min与max间
+     * @param value
+     * @param min
+     * @param max
+     * @return
+     */
+    private float clamp(float value, float min, float max) {
+        return Math.min(max, Math.max(value, min));
+    }
+
 
     /**
      * 响应移动事件
@@ -220,13 +266,36 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
      */
     public void handleTouchDrag(float normalizedX, float normalizedY) {
         if (malletPressed) {
-            Geometry.Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
-            Geometry.Plane plane = new Geometry.Plane(
-                    new Geometry.Point(0, 0, 0),
-                    new Geometry.Vector(0, 1, 0));
-            Geometry.Point touchedPoint = Geometry.intersectionPoint(ray, plane);
+            Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
+            Plane plane = new Plane(
+                    new Point(0, 0, 0),
+                    new Vector(0, 1, 0));
+            Point touchedPoint = intersectionPoint(ray, plane);
+            LogUtils.d(TAG, "touchPoint: " + touchedPoint);
+
+            // 另木槌保持在边界内
+            previousBlueMalletPosition = blueMalletPosition;
             blueMalletPosition =
-                    new Geometry.Point(touchedPoint.x, mallet.height / 2f, touchedPoint.z);
+                    new Point(
+                            clamp(touchedPoint.x,
+                                    leftBound + mallet.radius,
+                                    rightBound - mallet.radius),
+                            mallet.height / 2f,
+                            clamp(touchedPoint.z,
+                                    farBound + mallet.radius,
+                                    nearBound - mallet.radius)
+                    );
+            LogUtils.d(TAG, " clamp" + touchedPoint.z + " " + (nearBound - mallet.radius) + " " + (farBound + mallet.radius));
+
+            // 计算碰撞
+            float distance =
+                    vectorBetween(blueMalletPosition, puckPosition).length();
+            // 碰撞后的方向连线为冰球与木槌连线的方向
+            if (distance < (puck.radius + mallet.radius)) {
+                puckVector = vectorBetween(previousBlueMalletPosition, puckPosition);
+                puckVector = puckVector.scale(0.99f);
+                puckVector.print();
+            }
         }
     }
 
@@ -238,9 +307,9 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
      * @param normalizedY
      * @return
      */
-    private Geometry.Ray convertNormalized2DPointToRay(float normalizedX, float normalizedY) {
-        final float[] nearPointNdc = {normalizedX, normalizedY, -1, 1}; // 归一化坐标体系下的近平面点
-        final float[] farPointNdc = {normalizedX, normalizedY, 1, 1}; // 归一化坐标体系下的远平面点
+    private Ray convertNormalized2DPointToRay(float normalizedX, float normalizedY) {
+        final float[] nearPointNdc = {normalizedX, normalizedY, 1, 1}; // 归一化坐标体系下的近平面点
+        final float[] farPointNdc = {normalizedX, normalizedY, -1, 1}; // 归一化坐标体系下的远平面点
 
         final float[] nearPointWorld = new float[4]; // 世界坐标系下的近平面点
         final float[] farPointWorld = new float[4];
@@ -253,20 +322,20 @@ public class AirHockeyRender implements GLSurfaceView.Renderer {
         );
 
         //撤销透视除法的影响，直接使用逆矩阵的反转w即可
-        divideByW(nearPointNdc);
-        divideByW(farPointNdc);
+        divideByW(nearPointWorld);
+        divideByW(farPointWorld);
 
         // 通过顶点构造射线
-        Geometry.Point nearPointRay =
-                new Geometry.Point(nearPointWorld[0], nearPointWorld[1], nearPointWorld[2]);
-        Geometry.Point farPointRay =
-                new Geometry.Point(farPointWorld[0], farPointWorld[1], farPointWorld[2]);
+        Point nearPointRay =
+                new Point(nearPointWorld[0], nearPointWorld[1], nearPointWorld[2]);
+        Point farPointRay =
+                new Point(farPointWorld[0], farPointWorld[1], farPointWorld[2]);
 
-        LogUtils.d(TAG, "nearPointRay: " + nearPointRay
-            + "\nfarPointRay: " + farPointRay);
+        LogUtils.d(TAG, "nearPointRay: " + nearPointWorld[0] + "," + nearPointWorld[1] + "," + nearPointWorld[2] + "," + nearPointWorld[3]
+            + "\nfarPointRay: " + farPointWorld[0] + "," + farPointWorld[1] + "," + farPointWorld[2] + "," + farPointWorld[3]);
 
-        return new Geometry.Ray(nearPointRay,
-                Geometry.vectorBetween(nearPointRay, farPointRay));
+        return new Ray(nearPointRay,
+                vectorBetween(nearPointRay, farPointRay));
     }
 
     /**
