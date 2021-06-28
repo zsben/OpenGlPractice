@@ -13,7 +13,9 @@ void main() {
 
     v_Color = a_Color;
     v_ElapsedTime = u_Time - a_ParticleStartTime; // 计算粒子运行时间
+    float gravityFactor = v_ElapsedTime * v_ElapsedTime / 8.0;
     vec3 currentPosition = a_Position + (a_DirectionVector * v_ElapsedTime); // 计算粒子位置
+    currentPosition.y -= gravityFactor;
     gl_Position = u_Matrix * vec4(currentPosition, 1.0);
     gl_PointSize = 10.0;
 
