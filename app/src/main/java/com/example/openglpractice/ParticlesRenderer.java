@@ -10,13 +10,18 @@ import com.example.openglpractice.objects.ParticleSystem;
 import com.example.openglpractice.programs.ParticleShaderProgram;
 import com.example.openglpractice.util.Geometry.*;
 import com.example.openglpractice.util.MatrixHelper;
+import com.example.openglpractice.util.TextureHelper;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import static android.opengl.GLES20.GL_BLEND;
 import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
+import static android.opengl.GLES20.GL_ONE;
+import static android.opengl.GLES20.glBlendFunc;
 import static android.opengl.GLES20.glClear;
 import static android.opengl.GLES20.glClearColor;
+import static android.opengl.GLES20.glEnable;
 import static android.opengl.GLES20.glViewport;
 import static android.opengl.Matrix.multiplyMM;
 import static android.opengl.Matrix.setIdentityM;
@@ -40,6 +45,8 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
     private ParticleShooter greenParticleShooter;
     private long globalStartTime;
 
+    private int texture;
+
     public ParticlesRenderer(Context context) {
         this.context = context;
     }
@@ -47,6 +54,9 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         glClearColor(0f, 0f, 0f, 0f);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
 
         particleProgram = new ParticleShaderProgram(context);
         particleSystem = new ParticleSystem(10000);
@@ -78,6 +88,8 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
                 angleVarianceInDegrees,
                 speedVariance
         );
+
+        texture = TextureHelper.loadTexture(context, R.drawable.particle_texture);
     }
 
     @Override
@@ -105,7 +117,7 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
 
         particleProgram.useProgram();
         setIdentityM(viewProjectionMatrix, 0);
-        particleProgram.setUniforms(viewProjectionMatrix, currentTime);
+        particleProgram.setUniforms(viewProjectionMatrix, currentTime, texture);
         particleSystem.bindData(particleProgram);
         particleSystem.draw();
     }
