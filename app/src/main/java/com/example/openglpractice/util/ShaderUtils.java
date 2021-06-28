@@ -62,10 +62,9 @@ public class ShaderUtils {
         // 查看编译是否成功
         if (compileStatus[0] == 0) {
             // If it failed, delete the shader object.
-            glDeleteShader(shaderObjectId);
-
             LogUtils.e(TAG, "Compilation of shader failed: " + glGetShaderInfoLog(shaderObjectId) + "\n" + shaderCode);
 
+            glDeleteShader(shaderObjectId);
             return 0;
         }
 

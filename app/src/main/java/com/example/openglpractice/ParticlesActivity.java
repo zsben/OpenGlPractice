@@ -11,7 +11,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
-public class AirHockeyActivity extends AppCompatActivity {
+public class ParticlesActivity extends AppCompatActivity {
 
     private GLSurfaceView glSurfaceView;
     private boolean rendererSet = false; // renderer是否被设置
@@ -32,7 +32,7 @@ public class AirHockeyActivity extends AppCompatActivity {
 
         final boolean supportEs2 = configurationInfo.reqGlEsVersion >= 0x20000;
 
-        final AirHockeyRender airHockeyRender = new AirHockeyRender(this);
+        final ParticlesRenderer particlesRenderer = new ParticlesRenderer(this);
 
 
         if (supportEs2) {
@@ -41,7 +41,7 @@ public class AirHockeyActivity extends AppCompatActivity {
             glSurfaceView.setEGLContextClientVersion(2);
             // Assign renderer. 设置renderer
 
-            glSurfaceView.setRenderer(airHockeyRender);
+            glSurfaceView.setRenderer(particlesRenderer);
             rendererSet = true;
         } else {
             Toast.makeText(this, "This device does not support OpenGL ES 2.0",
@@ -51,39 +51,6 @@ public class AirHockeyActivity extends AppCompatActivity {
 
         // 把glSurfaceView添加到activity中
         setContentView(glSurfaceView);
-
-        // 监听触控事件
-        glSurfaceView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event != null) {
-                    // 将坐标转换成OpenGL事件坐标
-                    final float normalizedX = (event.getX() / (float) v.getWidth()) * 2 - 1;
-                    final float normalizedY = (event.getY() / (float) v.getHeight()) * 2 - 1;
-
-                    // 将事件通过线程分发交给Render处理
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        glSurfaceView.queueEvent(new Runnable() { // 去GLThread工作
-                            @Override
-                            public void run() {
-                                airHockeyRender.handleTouchPress(normalizedX, -normalizedY);
-                            }
-                        });
-                    } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                        glSurfaceView.queueEvent(new Runnable() {
-                            @Override
-                            public void run() {
-                                airHockeyRender.handleTouchDrag(normalizedX, -normalizedY);
-                            }
-                        });
-                    }
-
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });
     }
 
     @Override
