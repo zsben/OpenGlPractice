@@ -27,6 +27,7 @@ import static android.opengl.GLES20.glDisable;
 import static android.opengl.GLES20.glEnable;
 import static android.opengl.GLES20.glViewport;
 import static android.opengl.Matrix.multiplyMM;
+import static android.opengl.Matrix.rotateM;
 import static android.opengl.Matrix.setIdentityM;
 import static android.opengl.Matrix.translateM;
 
@@ -125,6 +126,8 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
      */
     private void drawSkyBox(){
         setIdentityM(viewMatrix, 0);
+        rotateM(viewMatrix, 0, -yRotation, 1f, 0f, 0f); // 旋转y轴
+        rotateM(viewMatrix, 0, -xRotation, 0f, 1f, 0f); // 旋转x轴
         multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0
                 , viewMatrix, 0);
 
@@ -149,6 +152,8 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
         blueParticleShooter.addParticles(particleSystem, currentTime, 5);
 
         setIdentityM(viewMatrix, 0);
+        rotateM(viewMatrix, 0, -yRotation, 1f, 0f, 0f); // 旋转y轴
+        rotateM(viewMatrix, 0, -xRotation, 0f, 1f, 0f); // 旋转x轴
         translateM(viewMatrix, 0, 0f, -1.5f, -5f);
         multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0
                 , viewMatrix, 0);
@@ -160,5 +165,20 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
         particleSystem.draw();
 
         glDisable(GL_BLEND);
+    }
+
+
+    /**
+     * 通过手指滑动的距离进行滑动
+     */
+    private float xRotation, yRotation;
+    public void handleTouchDrag(float deltaX, float deltaY){
+        xRotation += deltaX / 16f;
+        yRotation += deltaY / 16f;
+        if (yRotation < -90) {
+            yRotation = -90;
+        } else if (yRotation > 90){
+            yRotation = 90;
+        }
     }
 }
