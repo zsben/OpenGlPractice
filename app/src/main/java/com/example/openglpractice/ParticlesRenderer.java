@@ -7,7 +7,9 @@ import android.opengl.GLSurfaceView;
 
 import com.example.openglpractice.objects.ParticleShooter;
 import com.example.openglpractice.objects.ParticleSystem;
+import com.example.openglpractice.objects.SkyBox;
 import com.example.openglpractice.programs.ParticleShaderProgram;
+import com.example.openglpractice.programs.SkyBoxShaderProgram;
 import com.example.openglpractice.util.Geometry.*;
 import com.example.openglpractice.util.MatrixHelper;
 import com.example.openglpractice.util.TextureHelper;
@@ -21,6 +23,7 @@ import static android.opengl.GLES20.GL_ONE;
 import static android.opengl.GLES20.glBlendFunc;
 import static android.opengl.GLES20.glClear;
 import static android.opengl.GLES20.glClearColor;
+import static android.opengl.GLES20.glDisable;
 import static android.opengl.GLES20.glEnable;
 import static android.opengl.GLES20.glViewport;
 import static android.opengl.Matrix.multiplyMM;
@@ -45,7 +48,11 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
     private ParticleShooter greenParticleShooter;
     private long globalStartTime;
 
-    private int texture;
+    private int particleTexture;
+
+    private SkyBoxShaderProgram skyBoxShaderProgram;
+    private SkyBox skyBox;
+    private int skyBoxTexture;
 
     public ParticlesRenderer(Context context) {
         this.context = context;
@@ -54,9 +61,6 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         glClearColor(0f, 0f, 0f, 0f);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
 
         particleProgram = new ParticleShaderProgram(context);
         particleSystem = new ParticleSystem(10000);
@@ -89,7 +93,16 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
                 speedVariance
         );
 
-        texture = TextureHelper.loadTexture(context, R.drawable.particle_texture);
+        particleTexture = TextureHelper.loadTexture(context, R.drawable.particle_texture);
+
+        skyBoxShaderProgram = new SkyBoxShaderProgram(context);
+        skyBox = new SkyBox();
+        skyBoxTexture = TextureHelper.loadCubeMap(context,
+                new int[] {
+                        R.drawable.left, R.drawable.right,
+                        R.drawable.bottom, R.drawable.top,
+                        R.drawable.front, R.drawable.back
+                });
     }
 
     @Override
@@ -98,16 +111,36 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
 
         MatrixHelper.perspectiveM(projectionMatrix, 45, (float) width
                 / (float) height, 1f, 10f);
-
-        setIdentityM(viewMatrix, 0);
-        translateM(viewMatrix, 0, 0f, -1.5f, -5f);
-        multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0
-                , viewMatrix, 0);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
         glClear(GL_COLOR_BUFFER_BIT);
+        drawSkyBox();
+        drawParticles();
+    }
+
+    /**
+     * 绘制天空盒子
+     */
+    private void drawSkyBox(){
+        setIdentityM(viewMatrix, 0);
+        multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0
+                , viewMatrix, 0);
+
+        skyBoxShaderProgram.useProgram();
+        skyBoxShaderProgram.setUniforms(viewProjectionMatrix, skyBoxTexture);
+        skyBox.bindData(skyBoxShaderProgram);
+        skyBox.draw();
+    }
+
+    /**
+     * 绘制粒子效果
+     */
+    private void drawParticles(){
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
 
         float currentTime = (System.nanoTime() - globalStartTime) / 1000000000f;
 
@@ -115,10 +148,17 @@ public class ParticlesRenderer implements GLSurfaceView.Renderer {
         greenParticleShooter.addParticles(particleSystem, currentTime, 5);
         blueParticleShooter.addParticles(particleSystem, currentTime, 5);
 
+        setIdentityM(viewMatrix, 0);
+        translateM(viewMatrix, 0, 0f, -1.5f, -5f);
+        multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0
+                , viewMatrix, 0);
+
         particleProgram.useProgram();
         setIdentityM(viewProjectionMatrix, 0);
-        particleProgram.setUniforms(viewProjectionMatrix, currentTime, texture);
+        particleProgram.setUniforms(viewProjectionMatrix, currentTime, particleTexture);
         particleSystem.bindData(particleProgram);
         particleSystem.draw();
+
+        glDisable(GL_BLEND);
     }
 }

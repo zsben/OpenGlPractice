@@ -1,6 +1,7 @@
 package com.example.openglpractice.objects;
 
 import com.example.openglpractice.data.VertexArray;
+import com.example.openglpractice.programs.SkyBoxShaderProgram;
 
 import java.nio.ByteBuffer;
 
@@ -52,8 +53,10 @@ public class SkyBox {
         indexArray.position(0);
     }
 
-    public void bindData() {
-
+    public void bindData(SkyBoxShaderProgram skyBoxShaderProgram) {
+        vertexArray.setVertexAttribPointer(0,
+                skyBoxShaderProgram.getPositionAttributeLocation(),
+                POSITION_COMPONENT_COUNT, 0);
     }
 
     /**
